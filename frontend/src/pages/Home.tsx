@@ -2,7 +2,8 @@
 
 import React from 'react'
 import { Redirect } from 'react-router-dom'
-import { isLoggedIn } from '../auth'
+import { getToken, isLoggedIn } from '../auth'
+import ProjectList from './projects/ProjectList'
 
 interface Props {
 }
@@ -13,6 +14,9 @@ export default function Home(props:Props) {
         return <Redirect to='/login'/>
     }
 
-    return <div>Home goes here</div>
+    return <div>
+        <div>Logged in as {getToken().authEmail} with token {getToken().auth}</div>
+        <ProjectList />
+    </div>
 }
 

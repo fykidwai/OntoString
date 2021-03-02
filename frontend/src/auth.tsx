@@ -42,6 +42,11 @@ export function getToken() {
     return { authEmail: userEmail, auth: token };
 }
 
+export function getAuthHeaders() {
+    return { 'Authorization': 'Bearer ' + getToken().auth }
+    // return { 'Authorization': 'Bearer james' }
+}
+
 
 export function isLoggedIn() {
     return !!checkUserAuthStatus()

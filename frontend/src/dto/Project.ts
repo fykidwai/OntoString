@@ -27,6 +27,6 @@ export default interface Project {
         mappingList:string[]
     }[]
     preferredMappingOntologies:string[]
-    created: Provenance
+    created?: Provenance
 }
 
