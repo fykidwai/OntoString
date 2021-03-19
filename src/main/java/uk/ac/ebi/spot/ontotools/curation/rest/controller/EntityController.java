@@ -53,6 +53,9 @@ public class EntityController {
     @Autowired
     private MappingService mappingService;
 
+    @Autowired
+    private AuditEntryService auditEntryService;
+
     /**
      * GET /v1/projects/{projectId}/entities
      */
@@ -71,11 +74,14 @@ public class EntityController {
 
         Page<Entity> entities = entityService.retrieveEntitiesForProject(projectId, pageable);
         List<String> entityIds = entities.get().map(Entity::getId).collect(Collectors.toList());
-        Map<String, List<Mapping>> mappings = mappingService.retrieveMappingsForEntities(entityIds);
+        Map<String, Mapping> mappings = mappingService.retrieveMappingsForEntities(entityIds);
         Map<String, List<MappingSuggestion>> mappingSuggestions = mappingSuggestionsService.retrieveMappingSuggestionsForEntities(entityIds);
         List<EntityDto> entityDtos = new ArrayList<>();
         for (Entity entity : entities.getContent()) {
-            entityDtos.add(EntityDtoAssembler.assemble(entity, sourceMap.get(entity.getSourceId()), mappings.get(entity.getId()), mappingSuggestions.get(entity.getId())));
+            entityDtos.add(EntityDtoAssembler.assemble(entity, sourceMap.get(entity.getSourceId()),
+                    mappings.get(entity.getId()),
+                    mappingSuggestions.get(entity.getId()),
+                    auditEntryService.retrieveAuditEntries(entity.getId())));
         }
         return new RestResponsePage<>(entityDtos, pageable, entities.getTotalElements());
     }
@@ -92,8 +98,10 @@ public class EntityController {
         projectService.verifyAccess(projectId, user, Arrays.asList(new ProjectRole[]{ProjectRole.ADMIN, ProjectRole.CONTRIBUTOR, ProjectRole.CONSUMER}));
         Entity entity = entityService.retrieveEntity(entityId);
         Source source = sourceService.getSource(entity.getSourceId(), projectId);
-        Map<String, List<Mapping>> mappings = mappingService.retrieveMappingsForEntities(Arrays.asList(new String[]{entityId}));
+        Mapping mapping = mappingService.retrieveMappingForEntity(entityId);
         Map<String, List<MappingSuggestion>> mappingSuggestions = mappingSuggestionsService.retrieveMappingSuggestionsForEntities(Arrays.asList(new String[]{entityId}));
-        return EntityDtoAssembler.assemble(entity, SourceDtoAssembler.assemble(source), mappings.get(entityId), mappingSuggestions.get(entityId));
+        return EntityDtoAssembler.assemble(entity, SourceDtoAssembler.assemble(source),
+                mapping, mappingSuggestions.get(entityId),
+                auditEntryService.retrieveAuditEntries(entity.getId()));
     }
 }

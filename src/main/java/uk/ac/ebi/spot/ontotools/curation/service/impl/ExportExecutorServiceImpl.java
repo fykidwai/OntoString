@@ -61,7 +61,7 @@ public class ExportExecutorServiceImpl implements ExportExecutorService {
     }
 
     @Override
-    @Async
+    @Async(value = "applicationTaskExecutor")
     public void addToQueue(ProjectExportRequest projectExportRequest) {
         log.info("Adding request to queue: {} | {}", projectExportRequest.getProjectId(), projectExportRequest.getRequestId());
         requestQueue.add(projectExportRequest.getId());
@@ -129,8 +129,8 @@ public class ExportExecutorServiceImpl implements ExportExecutorService {
     }
 
     private void processEntity(Entity entity, EntityDataCollector entityDataCollector) {
-        List<Mapping> mappingList = mappingService.retrieveMappingsForEntity(entity.getId());
+        Mapping mapping = mappingService.retrieveMappingForEntity(entity.getId());
         List<MappingSuggestion> mappingSuggestions = mappingSuggestionsService.retrieveMappingSuggestionsForEntity(entity.getId());
-        entityDataCollector.add(entity, mappingList, mappingSuggestions);
+        entityDataCollector.add(entity, mapping, mappingSuggestions);
     }
 }

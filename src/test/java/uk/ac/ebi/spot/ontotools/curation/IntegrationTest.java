@@ -29,8 +29,15 @@ import uk.ac.ebi.spot.ontotools.curation.domain.mapping.Mapping;
 import uk.ac.ebi.spot.ontotools.curation.domain.mapping.MappingSuggestion;
 import uk.ac.ebi.spot.ontotools.curation.domain.mapping.OntologyTerm;
 import uk.ac.ebi.spot.ontotools.curation.repository.*;
-import uk.ac.ebi.spot.ontotools.curation.rest.dto.*;
+import uk.ac.ebi.spot.ontotools.curation.rest.dto.ProjectCreationDto;
+import uk.ac.ebi.spot.ontotools.curation.rest.dto.ProjectDto;
+import uk.ac.ebi.spot.ontotools.curation.rest.dto.SourceCreationDto;
+import uk.ac.ebi.spot.ontotools.curation.rest.dto.SourceDto;
+import uk.ac.ebi.spot.ontotools.curation.rest.dto.mapping.MappingDto;
 import uk.ac.ebi.spot.ontotools.curation.service.MatchmakerService;
+import uk.ac.ebi.spot.ontotools.curation.service.OLSService;
+import uk.ac.ebi.spot.ontotools.curation.service.UserService;
+import uk.ac.ebi.spot.ontotools.curation.service.ZoomaService;
 import uk.ac.ebi.spot.ontotools.curation.system.GeneralCommon;
 
 import javax.annotation.PreDestroy;
@@ -67,6 +74,24 @@ public abstract class IntegrationTest {
         }
     }
 
+    @Configuration
+    public static class MockZoomaServiceConfig {
+
+        @Bean
+        public ZoomaService zoomaService() {
+            return mock(ZoomaService.class);
+        }
+    }
+
+    @Configuration
+    public static class MockOLSServiceConfig {
+
+        @Bean
+        public OLSService olsService() {
+            return mock(OLSService.class);
+        }
+    }
+
     @Autowired
     private MongoTemplate mongoTemplate;
 
@@ -80,16 +105,19 @@ public abstract class IntegrationTest {
     private AuthTokenRepository authTokenRepository;
 
     @Autowired
-    private OntologyTermRepository ontologyTermRepository;
+    protected OntologyTermRepository ontologyTermRepository;
 
     @Autowired
-    private MappingSuggestionRepository mappingSuggestionRepository;
+    protected MappingSuggestionRepository mappingSuggestionRepository;
 
     @Autowired
-    private MappingRepository mappingRepository;
+    protected MappingRepository mappingRepository;
 
     @Autowired
     private EntityRepository entityRepository;
+
+    @Autowired
+    protected UserService userService;
 
     protected MockMvc mockMvc;
 
@@ -100,6 +128,8 @@ public abstract class IntegrationTest {
     protected User user2;
 
     protected Entity entity;
+
+    protected Mapping orphaTermMapping;
 
     @Before
     public void setup() throws Exception {
@@ -129,11 +159,10 @@ public abstract class IntegrationTest {
                                        String preferredMappingOntology, int noReviewsRequired) throws Exception {
         String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS;
 
-
-        ProjectCreationDto projectCreationDto = new ProjectCreationDto(name, "Description",
-                datasources != null ? Arrays.asList(new ProjectMappingConfigDto[]{new ProjectMappingConfigDto("ALL", datasources)}) : new ArrayList<>(),
-                ontologies != null ? Arrays.asList(new ProjectMappingConfigDto[]{new ProjectMappingConfigDto("ALL", ontologies)}) : new ArrayList<>(),
-                preferredMappingOntology != null ? Arrays.asList(new String[]{preferredMappingOntology}) : new ArrayList<>(), noReviewsRequired);
+        ProjectCreationDto projectCreationDto = new ProjectCreationDto(name, "Description", noReviewsRequired,
+                datasources != null ? datasources : new ArrayList<>(),
+                ontologies != null ? ontologies : new ArrayList<>(),
+                preferredMappingOntology != null ? Arrays.asList(new String[]{preferredMappingOntology}) : new ArrayList<>());
 
         String response = mockMvc.perform(post(endpoint)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -144,28 +173,27 @@ public abstract class IntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        ProjectDto actual = mapper.readValue(response, new TypeReference<ProjectDto>() {
+        ProjectDto actual = mapper.readValue(response, new TypeReference<>() {
         });
         assertEquals(projectCreationDto.getName(), actual.getName());
         assertEquals(projectCreationDto.getDescription(), actual.getDescription());
-        assertNotNull(actual.getDatasources());
-        assertNotNull(actual.getOntologies());
+        assertEquals(1, actual.getContexts().size());
+        assertEquals(CurationConstants.CONTEXT_DEFAULT, actual.getContexts().get(0).getName());
+        assertNotNull(actual.getContexts().get(0).getDatasources());
+        assertNotNull(actual.getContexts().get(0).getOntologies());
+
         if (datasources == null) {
-            assertTrue(actual.getDatasources().isEmpty());
+            assertTrue(actual.getContexts().get(0).getDatasources().isEmpty());
         } else {
-            assertEquals(1, actual.getDatasources().size());
-            assertEquals("ALL", actual.getDatasources().get(0).getField());
-            assertEquals(datasources.size(), actual.getDatasources().get(0).getMappingList().size());
+            assertEquals(datasources.size(), actual.getContexts().get(0).getDatasources().size());
         }
         if (ontologies == null) {
-            assertTrue(actual.getOntologies().isEmpty());
+            assertTrue(actual.getContexts().get(0).getOntologies().isEmpty());
         } else {
-            assertEquals(1, actual.getOntologies().size());
-            assertEquals("ALL", actual.getOntologies().get(0).getField());
-            assertEquals(ontologies.size(), actual.getOntologies().get(0).getMappingList().size());
+            assertEquals(ontologies.size(), actual.getContexts().get(0).getOntologies().size());
         }
         if (preferredMappingOntology != null) {
-            assertEquals(preferredMappingOntology, actual.getPreferredMappingOntologies().get(0));
+            assertEquals(preferredMappingOntology, actual.getContexts().get(0).getPreferredMappingOntologies().get(0));
         }
         return actual;
     }
@@ -186,7 +214,7 @@ public abstract class IntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        SourceDto actual = mapper.readValue(response, new TypeReference<SourceDto>() {
+        SourceDto actual = mapper.readValue(response, new TypeReference<>() {
         });
         assertEquals(sourceCreationDto.getName(), actual.getName());
         assertEquals(sourceCreationDto.getDescription(), actual.getDescription());
@@ -197,7 +225,7 @@ public abstract class IntegrationTest {
     protected void createEntityTestData(String sourceId, String projectId, User user) {
         Provenance provenance = new Provenance(user.getName(), user.getEmail(), DateTime.now());
         entity = entityRepository.insert(new Entity(null, "Achondroplasia", RandomStringUtils.randomAlphabetic(10),
-                RandomStringUtils.randomAlphabetic(10), sourceId, projectId, provenance, EntityStatus.AUTO_MAPPED));
+                CurationConstants.CONTEXT_DEFAULT, sourceId, projectId, null, provenance, EntityStatus.AUTO_MAPPED));
 
         OntologyTerm orphaTerm = ontologyTermRepository.insert(new OntologyTerm(null, "Orphanet:15", "http://www.orpha.net/ORDO/Orphanet_15",
                 DigestUtils.sha256Hex("http://www.orpha.net/ORDO/Orphanet_15"), "Achondroplasia", TermStatus.CURRENT.name(), null, null));
@@ -207,12 +235,13 @@ public abstract class IntegrationTest {
 
         mappingSuggestionRepository.insert(new MappingSuggestion(null, entity.getId(), orphaTerm.getId(), projectId, provenance, null));
         mappingSuggestionRepository.insert(new MappingSuggestion(null, entity.getId(), mondoTerm.getId(), projectId, provenance, null));
-        mappingRepository.insert(new Mapping(null, entity.getId(), orphaTerm.getId(), projectId, false, new ArrayList<>(), new ArrayList<>(), MappingStatus.AWAITING_REVIEW.name(), provenance, null));
+        orphaTermMapping = mappingRepository.insert(new Mapping(null, entity.getId(), Arrays.asList(new String[]{orphaTerm.getId()}),
+                projectId, false, new ArrayList<>(), new ArrayList<>(), MappingStatus.AWAITING_REVIEW.name(), provenance, null));
     }
 
-    protected EntityDto retrieveEntity(String projectId) throws Exception {
-        String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + projectId + CurationConstants.API_MAPPINGS
-                + "?entityId=" + entity.getId();
+    protected MappingDto retrieveMapping(String projectId) throws Exception {
+        String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + projectId +
+                CurationConstants.API_ENTITIES + "/" + entity.getId() + CurationConstants.API_MAPPING;
         String response = mockMvc.perform(get(endpoint)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(IDPConstants.JWT_TOKEN, "token1"))
@@ -221,9 +250,8 @@ public abstract class IntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        EntityDto actual = mapper.readValue(response, new TypeReference<EntityDto>() {
+        MappingDto actual = mapper.readValue(response, new TypeReference<>() {
         });
         return actual;
     }
-
 }

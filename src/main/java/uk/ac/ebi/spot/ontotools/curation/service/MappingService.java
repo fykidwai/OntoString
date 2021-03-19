@@ -10,17 +10,19 @@ import java.util.Map;
 
 public interface MappingService {
 
-    Mapping createMapping(Entity entity, OntologyTerm ontologyTerm, Provenance provenance);
+    Mapping createMapping(Entity entity, List<OntologyTerm> ontologyTerms, Provenance provenance);
 
-    Map<String, List<Mapping>> retrieveMappingsForEntities(List<String> entityIds);
+    Map<String, Mapping> retrieveMappingsForEntities(List<String> entityIds);
 
-    List<Mapping> retrieveMappingsForEntity(String entityId);
-
-    List<String> deleteMappingExcluding(Entity entity, String ontologyTermId);
+    Mapping retrieveMappingForEntity(String entityId);
 
     Mapping addReviewToMapping(String mappingId, String comment, int noReviewsRequired, Provenance provenance);
 
     Mapping retrieveMappingById(String mappingId);
 
     Mapping addCommentToMapping(String mappingId, String body, Provenance provenance);
+
+    Mapping updateMapping(String mappingId, List<OntologyTerm> ontologyTerms, Provenance provenance);
+
+    void deleteMapping(String mappingId, Provenance provenance, Map<String, String> metadata);
 }

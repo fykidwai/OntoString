@@ -1,8 +1,10 @@
 package uk.ac.ebi.spot.ontotools.curation.util;
 
+import org.apache.commons.lang3.tuple.Pair;
+import uk.ac.ebi.spot.ontotools.curation.constants.CurationConstants;
 import uk.ac.ebi.spot.ontotools.curation.constants.ProjectRole;
-import uk.ac.ebi.spot.ontotools.curation.domain.config.ProjectMappingConfig;
-import uk.ac.ebi.spot.ontotools.curation.domain.mapping.Entity;
+import uk.ac.ebi.spot.ontotools.curation.domain.Project;
+import uk.ac.ebi.spot.ontotools.curation.domain.ProjectContext;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,38 +72,24 @@ public class CurationUtil {
         return map;
     }
 
-    public static List<ProjectMappingConfig> configListtoLowerCase(List<ProjectMappingConfig> projectMappingConfigs) {
-        List<ProjectMappingConfig> result = new ArrayList<>();
-        for (ProjectMappingConfig projectMappingConfig : projectMappingConfigs) {
-            result.add(new ProjectMappingConfig(projectMappingConfig.getField().toLowerCase(), listToLowerCase(projectMappingConfig.getMappingList())));
-        }
-        return result;
-    }
-
-    public static List<String> configForField(Entity entity, List<ProjectMappingConfig> projectMappingConfigs) {
-        if (entity.getBaseField() == null) {
-            for (ProjectMappingConfig projectMappingConfig : projectMappingConfigs) {
-                if (projectMappingConfig.getField().equalsIgnoreCase(ProjectMappingConfig.ALL)) {
-                    return projectMappingConfig.getMappingList();
-                }
+    public static Pair<ProjectContext, Boolean> findContext(String contextName, Project project) {
+        ProjectContext projectContext = null;
+        ProjectContext defaultContext = null;
+        for (ProjectContext pc : project.getContexts()) {
+            if (pc.getName().equalsIgnoreCase(contextName)) {
+                projectContext = pc;
+                break;
             }
-
-            if (!projectMappingConfigs.isEmpty()) {
-                return projectMappingConfigs.get(0).getMappingList();
-            }
-        } else {
-            for (ProjectMappingConfig projectMappingConfig : projectMappingConfigs) {
-                if (projectMappingConfig.getField().equalsIgnoreCase(entity.getBaseField())) {
-                    return projectMappingConfig.getMappingList();
-                }
-            }
-            for (ProjectMappingConfig projectMappingConfig : projectMappingConfigs) {
-                if (projectMappingConfig.getField().equalsIgnoreCase(ProjectMappingConfig.ALL)) {
-                    return projectMappingConfig.getMappingList();
-                }
+            if (pc.getName().equalsIgnoreCase(CurationConstants.CONTEXT_DEFAULT)) {
+                defaultContext = pc;
             }
         }
 
-        return new ArrayList<>();
+        if (projectContext == null) {
+            return Pair.of(defaultContext, false);
+        }
+
+        return Pair.of(projectContext, true);
     }
+
 }

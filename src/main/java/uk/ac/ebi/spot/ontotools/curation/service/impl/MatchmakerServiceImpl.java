@@ -1,5 +1,6 @@
 package uk.ac.ebi.spot.ontotools.curation.service.impl;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,13 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import uk.ac.ebi.spot.ontotools.curation.constants.EntityStatus;
+import uk.ac.ebi.spot.ontotools.curation.domain.MatchmakingLogEntry;
 import uk.ac.ebi.spot.ontotools.curation.domain.Project;
+import uk.ac.ebi.spot.ontotools.curation.domain.ProjectContext;
 import uk.ac.ebi.spot.ontotools.curation.domain.Provenance;
 import uk.ac.ebi.spot.ontotools.curation.domain.auth.User;
 import uk.ac.ebi.spot.ontotools.curation.domain.mapping.Entity;
 import uk.ac.ebi.spot.ontotools.curation.domain.mapping.OntologyTerm;
-import uk.ac.ebi.spot.ontotools.curation.rest.dto.ols.OLSTermDto;
-import uk.ac.ebi.spot.ontotools.curation.rest.dto.oxo.OXOMappingResponseDto;
 import uk.ac.ebi.spot.ontotools.curation.rest.dto.zooma.ZoomaResponseDto;
 import uk.ac.ebi.spot.ontotools.curation.service.*;
 import uk.ac.ebi.spot.ontotools.curation.util.CurationUtil;
@@ -44,34 +45,42 @@ public class MatchmakerServiceImpl implements MatchmakerService {
     private OntologyTermService ontologyTermService;
 
     @Autowired
-    private OLSService olsService;
-
-    @Autowired
-    private OXOService oxoService;
-
-    @Autowired
     private UserService userService;
+
+    @Autowired
+    private MatchmakingLogService matchmakingLogService;
 
     @Override
     @Async(value = "applicationTaskExecutor")
     public void runMatchmaking(String sourceId, Project project) {
         log.info("Running auto-mapping for source: {}", sourceId);
         User robotUser = userService.retrieveRobotUser();
-        project.setOntologies(CurationUtil.configListtoLowerCase(project.getOntologies()));
-        project.setDatasources(CurationUtil.configListtoLowerCase(project.getDatasources()));
-        project.setPreferredMappingOntologies(CurationUtil.listToLowerCase(project.getPreferredMappingOntologies()));
+        String batchId = matchmakingLogService.createBatch(project.getId());
 
         long sTime = System.currentTimeMillis();
         Stream<Entity> entityStream = entityService.retrieveEntitiesForSource(sourceId);
-        entityStream.forEach(entity -> this.autoMap(entity, project, robotUser));
+        entityStream.forEach(entity -> this.autoMap(entity, project, robotUser, batchId));
         entityStream.close();
         long eTime = System.currentTimeMillis();
         log.info("[{}] Auto-mapping done in {}s", sourceId, (eTime - sTime) / 1000);
     }
 
-    private void autoMap(Entity entity, Project project, User user) {
-        List<String> projectDatasources = CurationUtil.configForField(entity, project.getDatasources());
-        List<String> projectOntologies = CurationUtil.configForField(entity, project.getOntologies());
+
+    private void autoMap(Entity entity, Project project, User user, String batchId) {
+        if (entity.getMappingStatus().equals(EntityStatus.MANUALLY_MAPPED) ||
+                entity.getMappingStatus().equals(EntityStatus.AUTO_MAPPED)) {
+            log.info("Entity [{}] has mapping status [{}]. Will not attempt re-mapping it.", entity.getName(), entity.getMappingStatus().name());
+            return;
+        }
+
+        Pair<ProjectContext, Boolean> projectContextInfo = CurationUtil.findContext(entity.getContext(), project);
+        if (!projectContextInfo.getRight()) {
+            log.error("Cannot find context [{}] for entity [{}] in project: {}", entity.getContext(), entity.getName(), project.getId());
+        }
+        ProjectContext projectContext = projectContextInfo.getLeft();
+
+        List<String> projectDatasources = projectContext.getDatasources();
+        List<String> projectOntologies = projectContext.getOntologies();
 
         /**
          * Retrieve annotations from Zooma from datasources stored in the project
@@ -111,88 +120,43 @@ public class MatchmakerServiceImpl implements MatchmakerService {
             }
         }
 
+        matchmakingLogService.logEntry(new MatchmakingLogEntry(null, batchId, entity.getId(),
+                entity.getName(), highConfidenceIRIs, finalIRIs));
         Provenance provenance = new Provenance(user.getName(), user.getEmail(), DateTime.now());
         List<OntologyTerm> termsCreated = new ArrayList<>();
         for (String iri : finalIRIs) {
-            OntologyTerm ontologyTerm = ontologyTermService.createTerm(iri, project);
+            OntologyTerm ontologyTerm = ontologyTermService.createTerm(iri, projectContext);
             if (ontologyTerm != null) {
                 termsCreated.add(ontologyTerm);
                 mappingSuggestionsService.createMappingSuggestion(entity, ontologyTerm, provenance);
+
+                if (entity.getMappingStatus().equals(EntityStatus.MANUALLY_MAPPED) || entity.getMappingStatus().equals(EntityStatus.AUTO_MAPPED)) {
+                    continue;
+                }
+
+                if (highConfidenceIRIs.contains(ontologyTerm.getIri())) {
+                    mappingService.createMapping(entity, Arrays.asList(new OntologyTerm[]{ontologyTerm}), provenance);
+                    entity = entityService.updateMappingStatus(entity, EntityStatus.AUTO_MAPPED);
+                    log.info("Found high confidence mapping for [{}] in: {}", entity.getName(), ontologyTerm.getIri());
+                } else {
+                    if (entity.getName().equalsIgnoreCase(ontologyTerm.getLabel())) {
+                        mappingService.createMapping(entity, Arrays.asList(new OntologyTerm[]{ontologyTerm}), provenance);
+                        entity = entityService.updateMappingStatus(entity, EntityStatus.AUTO_MAPPED);
+                        log.info("Found exact text matching for [{}] in: {}", entity.getName(), ontologyTerm.getIri());
+                    }
+                }
             }
         }
 
-        if (!termsCreated.isEmpty()) {
+        if (!termsCreated.isEmpty() && entity.getMappingStatus().equals(EntityStatus.UNMAPPED)) {
             entity = entityService.updateMappingStatus(entity, EntityStatus.SUGGESTIONS_PROVIDED);
             if (entity == null) {
                 return;
             }
         }
 
-        List<OntologyTerm> newTerms = findExactMapping(entity, termsCreated, highConfidenceIRIs, project, provenance);
-        if (!newTerms.isEmpty() && termsCreated.isEmpty()) {
-            entity = entityService.updateMappingStatus(entity, EntityStatus.SUGGESTIONS_PROVIDED);
-        }
-        termsCreated.addAll(newTerms);
-        mappingSuggestionsService.deleteMappingSuggestionsExcluding(entity, termsCreated);
-    }
-
-    private List<OntologyTerm> findExactMapping(Entity entity, List<OntologyTerm> termsCreated, List<String> highConfidenceIRIs, Project project, Provenance provenance) {
-        List<OntologyTerm> ontoSuggestions = new ArrayList<>();
-
-        if (!entity.getMappingStatus().equals(EntityStatus.UNMAPPED)) {
-            log.warn("Entity has an existing mapping.");
-        }
-
-        for (OntologyTerm ontologyTerm : termsCreated) {
-            if (highConfidenceIRIs.contains(ontologyTerm.getIri())) {
-                mappingService.createMapping(entity, ontologyTerm, provenance);
-                entity = entityService.updateMappingStatus(entity, EntityStatus.AUTO_MAPPED);
-                log.info("Found high confidence mapping for [{}] in: {}", entity.getName(), ontologyTerm.getIri());
-                return ontoSuggestions;
-            }
-        }
-
-        for (OntologyTerm ontologyTerm : termsCreated) {
-            if (entity.getName().equalsIgnoreCase(ontologyTerm.getLabel())) {
-                mappingService.createMapping(entity, ontologyTerm, provenance);
-                entity = entityService.updateMappingStatus(entity, EntityStatus.AUTO_MAPPED);
-                log.info("Found exact text matching for [{}] in: {}", entity.getName(), ontologyTerm.getIri());
-                return ontoSuggestions;
-            }
-        }
-
-        for (String iri : highConfidenceIRIs) {
-            String ontoId = CurationUtil.ontoFromIRI(iri);
-            List<OLSTermDto> olsTerms = olsService.retrieveTerms(ontoId, iri);
-            if (olsTerms.isEmpty()) {
-                log.warn("Found no OLS results. Cannot continue mapping for: {}", entity.getName());
-                continue;
-            }
-            if (olsTerms.size() > 1) {
-                log.warn("Found {} OLS results. Using only the first one to map to: {}", olsTerms.size(), entity.getName());
-            }
-
-            /**
-             * TODO: Discuss why are so many calls to OLS required
-             */
-            List<OXOMappingResponseDto> oxoMappings = oxoService.findMapping(Arrays.asList(new String[]{olsTerms.get(0).getCurie()}),
-                    CurationUtil.configForField(entity, project.getOntologies()));
-            for (OXOMappingResponseDto oxoMappingResponseDto : oxoMappings) {
-                String targetOntoId = oxoMappingResponseDto.getTargetPrefix().toLowerCase();
-                olsTerms = olsService.retrieveTerms(targetOntoId, oxoMappingResponseDto.getCurie());
-                if (olsTerms.isEmpty()) {
-                    continue;
-                }
-                String resultIri = olsTerms.get(0).getIri();
-                OntologyTerm ontologyTerm = ontologyTermService.createTerm(resultIri, project);
-                if (ontologyTerm != null) {
-                    ontoSuggestions.add(ontologyTerm);
-                    mappingSuggestionsService.createMappingSuggestion(entity, ontologyTerm, provenance);
-                }
-            }
-        }
-
-        return ontoSuggestions;
+        log.info(" -- Final IRIs and terms created: {}", finalIRIs, termsCreated);
+        mappingSuggestionsService.deleteMappingSuggestionsExcluding(entity, termsCreated, provenance);
     }
 
 }

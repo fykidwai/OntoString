@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import uk.ac.ebi.spot.ontotools.curation.constants.EntityStatus;
@@ -15,6 +17,8 @@ import uk.ac.ebi.spot.ontotools.curation.domain.Provenance;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@CompoundIndexes({@CompoundIndex(name = "ppIdx", def = "{'projectId': 1, 'priority': 1}"),
+        @CompoundIndex(name = "ppCon", def = "{'projectId': 1, 'context': 1}")})
 public class Entity {
 
     @Id
@@ -24,13 +28,15 @@ public class Entity {
 
     private String baseId;
 
-    private String baseField;
+    private String context;
 
     @Indexed
     private String sourceId;
 
     @Indexed
     private String projectId;
+
+    private Integer priority;
 
     private Provenance created;
 

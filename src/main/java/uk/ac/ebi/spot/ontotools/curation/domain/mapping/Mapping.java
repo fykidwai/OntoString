@@ -22,7 +22,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@CompoundIndexes({@CompoundIndex(name = "eoId", def = "{'entityId': 1, 'ontologyTermId': 1}")})
+@CompoundIndexes({@CompoundIndex(name = "eoId", def = "{'entityId': 1, 'ontologyTermIds': 1}")})
 public class Mapping {
 
     @Id
@@ -32,7 +32,7 @@ public class Mapping {
     private String entityId;
 
     @Indexed
-    private String ontologyTermId;
+    private List<String> ontologyTermIds;
 
     @Indexed
     private String projectId;
@@ -49,7 +49,7 @@ public class Mapping {
     private Provenance created;
 
     @Transient
-    private OntologyTerm ontologyTerm;
+    private List<OntologyTerm> ontologyTerms;
 
     public void addReview(Review review, int noReviewsRequired) {
         if (reviews == null) {

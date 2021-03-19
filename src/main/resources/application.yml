@@ -46,6 +46,19 @@ ontotools-curation:
 spring:
   config:
     activate:
+      on-profile: "test"
+  data:
+    mongodb:
+      uri: snoopy.ebi.ac.uk:27017
+
+ontotools-curation:
+  db: ontotools-curation-test
+
+---
+
+spring:
+  config:
+    activate:
       on-profile: "sandbox"
   data:
     mongodb:
@@ -62,7 +75,7 @@ spring:
       on-profile: "prod"
   data:
     mongodb:
-      uri: mongodb-hhvm-062.ebi.ac.uk:27017,mongodb-hxvm-063.ebi.ac.uk:27017/admin?replicaSet=gwasdepodevrs039
+      uri: mongos-hx-ontotoolscuratorprors071-01.ebi.ac.uk:27017,mongos-hl-ontotoolscuratorprors071-02.ebi.ac.uk:27017/admin?replicaSet=ontotoolscuratorprors071
 
 ontotools-curation:
-  db: ontotools-curation
+  db: ontotoolscurator

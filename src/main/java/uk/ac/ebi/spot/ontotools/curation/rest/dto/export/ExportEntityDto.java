@@ -20,26 +20,31 @@ public final class ExportEntityDto implements Serializable {
     @JsonProperty("upstreamId")
     private final String upstreamId;
 
-    @JsonProperty("upstreamField")
-    private final String upstreamField;
+    @JsonProperty("context")
+    private final String context;
+
+    @JsonProperty("priority")
+    private final Integer priority;
 
     @JsonProperty("mappingSuggestions")
     private final List<ExportMappingSuggestionDto> mappingSuggestions;
 
-    @JsonProperty("mappings")
-    private final List<ExportMappingDto> mappings;
+    @JsonProperty("mapping")
+    private final ExportMappingDto mapping;
 
     @JsonCreator
     public ExportEntityDto(@JsonProperty("name") String name,
                            @JsonProperty("upstreamId") String upstreamId,
-                           @JsonProperty("upstreamField") String upstreamField,
+                           @JsonProperty("context") String context,
+                           @JsonProperty("priority") Integer priority,
                            @JsonProperty("mappingSuggestions") List<ExportMappingSuggestionDto> mappingSuggestions,
-                           @JsonProperty("mappings") List<ExportMappingDto> mappings) {
+                           @JsonProperty("mapping") ExportMappingDto mapping) {
         this.name = name;
         this.upstreamId = upstreamId;
-        this.upstreamField = upstreamField;
+        this.context = context;
         this.mappingSuggestions = mappingSuggestions;
-        this.mappings = mappings;
+        this.mapping = mapping;
+        this.priority = priority;
     }
 
     public String getName() {
@@ -51,15 +56,19 @@ public final class ExportEntityDto implements Serializable {
         return upstreamId;
     }
 
-    public String getUpstreamField() {
-        return upstreamField;
+    public String getContext() {
+        return context;
     }
 
     public List<ExportMappingSuggestionDto> getMappingSuggestions() {
         return mappingSuggestions;
     }
 
-    public List<ExportMappingDto> getMappings() {
-        return mappings;
+    public ExportMappingDto getMapping() {
+        return mapping;
+    }
+
+    public Integer getPriority() {
+        return priority;
     }
 }

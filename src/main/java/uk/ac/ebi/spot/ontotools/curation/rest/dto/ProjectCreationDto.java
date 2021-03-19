@@ -22,31 +22,31 @@ public final class ProjectCreationDto implements Serializable {
     @JsonProperty("description")
     private final String description;
 
+    @JsonProperty("numberOfReviewsRequired")
+    private final Integer numberOfReviewsRequired;
+
     @JsonProperty("datasources")
-    private final List<ProjectMappingConfigDto> datasources;
+    private final List<String> datasources;
 
     @JsonProperty("ontologies")
-    private final List<ProjectMappingConfigDto> ontologies;
+    private final List<String> ontologies;
 
     @JsonProperty("preferredMappingOntologies")
     private final List<String> preferredMappingOntologies;
 
-    @JsonProperty("numberOfReviewsRequired")
-    private final Integer numberOfReviewsRequired;
-
     @JsonCreator
     public ProjectCreationDto(@JsonProperty("name") String name,
                               @JsonProperty("description") String description,
-                              @JsonProperty("datasources") List<ProjectMappingConfigDto> datasources,
-                              @JsonProperty("ontologies") List<ProjectMappingConfigDto> ontologies,
-                              @JsonProperty("preferredMappingOntologies") List<String> preferredMappingOntologies,
-                              @JsonProperty("numberOfReviewsRequired") Integer numberOfReviewsRequired) {
+                              @JsonProperty("numberOfReviewsRequired") Integer numberOfReviewsRequired,
+                              @JsonProperty("datasources") List<String> datasources,
+                              @JsonProperty("ontologies") List<String> ontologies,
+                              @JsonProperty("preferredMappingOntologies") List<String> preferredMappingOntologies) {
         this.name = name;
         this.description = description;
+        this.numberOfReviewsRequired = numberOfReviewsRequired;
         this.datasources = datasources;
         this.ontologies = ontologies;
         this.preferredMappingOntologies = preferredMappingOntologies;
-        this.numberOfReviewsRequired = numberOfReviewsRequired;
     }
 
     public String getName() {
@@ -57,19 +57,19 @@ public final class ProjectCreationDto implements Serializable {
         return description;
     }
 
-    public List<ProjectMappingConfigDto> getDatasources() {
+    public Integer getNumberOfReviewsRequired() {
+        return numberOfReviewsRequired;
+    }
+
+    public List<String> getDatasources() {
         return datasources;
     }
 
-    public List<ProjectMappingConfigDto> getOntologies() {
+    public List<String> getOntologies() {
         return ontologies;
     }
 
     public List<String> getPreferredMappingOntologies() {
         return preferredMappingOntologies;
-    }
-
-    public Integer getNumberOfReviewsRequired() {
-        return numberOfReviewsRequired;
     }
 }

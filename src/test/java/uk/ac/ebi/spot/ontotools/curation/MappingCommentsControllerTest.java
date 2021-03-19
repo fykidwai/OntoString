@@ -10,7 +10,6 @@ import uk.ac.ebi.spot.ontotools.curation.constants.IDPConstants;
 import uk.ac.ebi.spot.ontotools.curation.domain.Project;
 import uk.ac.ebi.spot.ontotools.curation.domain.mapping.Mapping;
 import uk.ac.ebi.spot.ontotools.curation.rest.assembler.ProvenanceDtoAssembler;
-import uk.ac.ebi.spot.ontotools.curation.rest.dto.EntityDto;
 import uk.ac.ebi.spot.ontotools.curation.rest.dto.ProjectDto;
 import uk.ac.ebi.spot.ontotools.curation.rest.dto.SourceDto;
 import uk.ac.ebi.spot.ontotools.curation.rest.dto.mapping.CommentDto;
@@ -61,9 +60,8 @@ public class MappingCommentsControllerTest extends IntegrationTest {
      * POST /v1/projects/{projectId}/mappings/{mappingId}/comments
      */
     @Test
-    public void shouldCreateReview() throws Exception {
-        EntityDto actual = super.retrieveEntity(project.getId());
-        MappingDto mappingDto = actual.getMappings().get(0);
+    public void shouldCreateComment() throws Exception {
+        MappingDto mappingDto = super.retrieveMapping(project.getId());
 
         String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + project.getId() +
                 CurationConstants.API_MAPPINGS + "/" + mappingDto.getId() + CurationConstants.API_COMMENTS;
@@ -88,9 +86,8 @@ public class MappingCommentsControllerTest extends IntegrationTest {
      * GET /v1/projects/{projectId}/mappings/{mappingId}/comments
      */
     @Test
-    public void shouldGetReviews() throws Exception {
-        EntityDto actual = super.retrieveEntity(project.getId());
-        MappingDto mappingDto = actual.getMappings().get(0);
+    public void shouldGetComments() throws Exception {
+        MappingDto mappingDto = super.retrieveMapping(project.getId());
         mappingService.addCommentToMapping(mappingDto.getId(), "New comment", ProvenanceDtoAssembler.disassemble(mappingDto.getCreated()));
 
         String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + project.getId() +
@@ -107,5 +104,37 @@ public class MappingCommentsControllerTest extends IntegrationTest {
         });
         assertEquals(1, commentDtos.size());
         assertEquals("New comment", commentDtos.get(0).getBody());
+    }
+
+    /**
+     * POST /v1/projects/{projectId}/mappings/{mappingId}/comments
+     */
+    @Test
+    public void shouldNotCreateComment() throws Exception {
+        MappingDto mappingDto = super.retrieveMapping(project.getId());
+
+        String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + project.getId() +
+                CurationConstants.API_MAPPINGS + "/" + mappingDto.getId() + CurationConstants.API_COMMENTS;
+        mockMvc.perform(post(endpoint)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("New comment")
+                .header(IDPConstants.JWT_TOKEN, "token2"))
+                .andExpect(status().isNotFound());
+    }
+
+    /**
+     * GET /v1/projects/{projectId}/mappings/{mappingId}/comments
+     */
+    @Test
+    public void shouldNotGetComments() throws Exception {
+        MappingDto mappingDto = super.retrieveMapping(project.getId());
+        mappingService.addCommentToMapping(mappingDto.getId(), "New comment", ProvenanceDtoAssembler.disassemble(mappingDto.getCreated()));
+
+        String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + project.getId() +
+                CurationConstants.API_MAPPINGS + "/" + mappingDto.getId() + CurationConstants.API_COMMENTS;
+        mockMvc.perform(get(endpoint)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(IDPConstants.JWT_TOKEN, "token2"))
+                .andExpect(status().isNotFound());
     }
 }

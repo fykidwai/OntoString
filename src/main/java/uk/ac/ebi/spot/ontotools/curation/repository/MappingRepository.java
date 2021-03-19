@@ -7,9 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MappingRepository extends MongoRepository<Mapping, String> {
-    Optional<Mapping> findByEntityIdAndOntologyTermId(String entityId, String ontologyTermId);
-
     List<Mapping> findByEntityIdIn(List<String> entityIds);
 
-    List<Mapping> findByEntityId(String entityId);
+    Optional<Mapping> findByEntityId(String entityId);
 }

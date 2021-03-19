@@ -11,11 +11,13 @@ import uk.ac.ebi.spot.ontotools.curation.rest.assembler.ProvenanceDtoAssembler;
 import uk.ac.ebi.spot.ontotools.curation.rest.dto.export.ExportEntityDto;
 import uk.ac.ebi.spot.ontotools.curation.rest.dto.export.ExportMappingDto;
 import uk.ac.ebi.spot.ontotools.curation.rest.dto.export.ExportMappingSuggestionDto;
+import uk.ac.ebi.spot.ontotools.curation.rest.dto.mapping.OntologyTermDto;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -32,15 +34,14 @@ public class EntityDataCollector {
         this.exportEntityDtos = new ArrayList<>();
     }
 
-    public void add(Entity entity, List<Mapping> mappingList, List<MappingSuggestion> mappingSuggestionList) {
+    public void add(Entity entity, Mapping mapping, List<MappingSuggestion> mappingSuggestionList) {
         List<ExportMappingSuggestionDto> mappingSuggestions = new ArrayList<>();
-        List<ExportMappingDto> mappings = new ArrayList<>();
+        ExportMappingDto exportMappingDto = null;
 
-        if (mappingList != null) {
-            for (Mapping mapping : mappingList) {
-                mappings.add(new ExportMappingDto(OntologyTermDtoAssembler.assemble(mapping.getOntologyTerm()), mapping.isReviewed(),
-                        mapping.getStatus(), ProvenanceDtoAssembler.assemble(mapping.getCreated())));
-            }
+        if (mapping != null) {
+            List<OntologyTermDto> ontologyTermDtos = mapping.getOntologyTerms().stream().map(OntologyTermDtoAssembler::assemble).collect(Collectors.toList());
+            exportMappingDto = new ExportMappingDto(ontologyTermDtos, mapping.isReviewed(),
+                    mapping.getStatus(), ProvenanceDtoAssembler.assemble(mapping.getCreated()));
         }
         if (mappingSuggestionList != null) {
             for (MappingSuggestion mappingSuggestion : mappingSuggestionList) {
@@ -51,9 +52,10 @@ public class EntityDataCollector {
 
         exportEntityDtos.add(new ExportEntityDto(entity.getName(),
                 entity.getBaseId(),
-                entity.getBaseField(),
+                entity.getContext(),
+                entity.getPriority(),
                 mappingSuggestions,
-                mappings
+                exportMappingDto
         ));
     }
 

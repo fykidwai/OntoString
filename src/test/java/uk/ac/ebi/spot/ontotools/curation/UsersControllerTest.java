@@ -36,7 +36,7 @@ public class UsersControllerTest extends IntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        List<UserDto> actual = mapper.readValue(response, new TypeReference<List<UserDto>>() {
+        List<UserDto> actual = mapper.readValue(response, new TypeReference<>() {
         });
 
         assertEquals(1, actual.size());
@@ -51,6 +51,36 @@ public class UsersControllerTest extends IntegrationTest {
     public void shouldNotGetUsersForProject() throws Exception {
         ProjectDto projectDto = super.createProject("New Project 1", "token1", null, null, null, 0);
         String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + projectDto.getId() + CurationConstants.API_USERS;
+        mockMvc.perform(get(endpoint)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(IDPConstants.JWT_TOKEN, "token2"))
+                .andExpect(status().isNotFound());
+    }
+
+    /**
+     * GET /v1/projects/{projectId}/users
+     */
+    @Test
+    public void shouldNotGetUsersForProjectAsContributor() throws Exception {
+        ProjectDto projectDto = super.createProject("New Project 1", "token1", null, null, null, 0);
+        String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + projectDto.getId() + CurationConstants.API_USERS;
+
+        userService.addUserToProject(super.user2, projectDto.getId(), Arrays.asList(new ProjectRole[]{ProjectRole.CONTRIBUTOR}));
+        mockMvc.perform(get(endpoint)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(IDPConstants.JWT_TOKEN, "token2"))
+                .andExpect(status().isNotFound());
+    }
+
+    /**
+     * GET /v1/projects/{projectId}/users
+     */
+    @Test
+    public void shouldNotGetUsersForProjectAsConsumer() throws Exception {
+        ProjectDto projectDto = super.createProject("New Project 1", "token1", null, null, null, 0);
+        String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + projectDto.getId() + CurationConstants.API_USERS;
+
+        userService.addUserToProject(super.user2, projectDto.getId(), Arrays.asList(new ProjectRole[]{ProjectRole.CONSUMER}));
         mockMvc.perform(get(endpoint)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(IDPConstants.JWT_TOKEN, "token2"))
@@ -81,7 +111,7 @@ public class UsersControllerTest extends IntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        UserDto actual = mapper.readValue(response, new TypeReference<UserDto>() {
+        UserDto actual = mapper.readValue(response, new TypeReference<>() {
         });
 
         assertEquals(user2.getEmail(), actual.getEmail());
@@ -97,7 +127,7 @@ public class UsersControllerTest extends IntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        List<UserDto> actualList = mapper.readValue(response, new TypeReference<List<UserDto>>() {
+        List<UserDto> actualList = mapper.readValue(response, new TypeReference<>() {
         });
 
         assertEquals(2, actualList.size());
@@ -116,11 +146,62 @@ public class UsersControllerTest extends IntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        ProjectDto actualProject = mapper.readValue(response, new TypeReference<ProjectDto>() {
+        ProjectDto actualProject = mapper.readValue(response, new TypeReference<>() {
         });
         assertEquals(projectDto.getName(), actualProject.getName());
         assertEquals(projectDto.getDescription(), actualProject.getDescription());
 
+    }
+
+    /**
+     * POST /v1/projects/{projectId}/users
+     */
+    @Test
+    public void shouldNotAddUserToProject() throws Exception {
+        ProjectDto projectDto = super.createProject("New Project 1", "token1", null, null, null, 0);
+        String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + projectDto.getId() + CurationConstants.API_USERS;
+        ProjectUserDto projectUserDto = new ProjectUserDto(UserDtoAssembler.assemble(user2), Arrays.asList(new String[]{ProjectRole.CONTRIBUTOR.name()}));
+        mockMvc.perform(post(endpoint)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(projectUserDto))
+                .header(IDPConstants.JWT_TOKEN, "token2"))
+                .andExpect(status().isNotFound());
+    }
+
+    /**
+     * POST /v1/projects/{projectId}/users
+     */
+    @Test
+    public void shouldNotAddUserToProjectAsContributor() throws Exception {
+        ProjectDto projectDto = super.createProject("New Project 1", "token1", null, null, null, 0);
+        String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + projectDto.getId() + CurationConstants.API_USERS;
+        ProjectUserDto projectUserDto = new ProjectUserDto(UserDtoAssembler.assemble(user2), Arrays.asList(new String[]{ProjectRole.CONTRIBUTOR.name()}));
+
+        userService.addUserToProject(super.user2, projectDto.getId(), Arrays.asList(new ProjectRole[]{ProjectRole.CONTRIBUTOR}));
+
+        mockMvc.perform(post(endpoint)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(projectUserDto))
+                .header(IDPConstants.JWT_TOKEN, "token2"))
+                .andExpect(status().isNotFound());
+    }
+
+    /**
+     * POST /v1/projects/{projectId}/users
+     */
+    @Test
+    public void shouldNotAddUserToProjectAsConsumer() throws Exception {
+        ProjectDto projectDto = super.createProject("New Project 1", "token1", null, null, null, 0);
+        String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + projectDto.getId() + CurationConstants.API_USERS;
+        ProjectUserDto projectUserDto = new ProjectUserDto(UserDtoAssembler.assemble(user2), Arrays.asList(new String[]{ProjectRole.CONTRIBUTOR.name()}));
+
+        userService.addUserToProject(super.user2, projectDto.getId(), Arrays.asList(new ProjectRole[]{ProjectRole.CONSUMER}));
+
+        mockMvc.perform(post(endpoint)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(projectUserDto))
+                .header(IDPConstants.JWT_TOKEN, "token2"))
+                .andExpect(status().isNotFound());
     }
 
     /**
@@ -141,7 +222,7 @@ public class UsersControllerTest extends IntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        UserDto actual = mapper.readValue(response, new TypeReference<UserDto>() {
+        UserDto actual = mapper.readValue(response, new TypeReference<>() {
         });
 
         assertEquals(user2.getEmail(), actual.getEmail());
@@ -160,7 +241,7 @@ public class UsersControllerTest extends IntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        actual = mapper.readValue(response, new TypeReference<UserDto>() {
+        actual = mapper.readValue(response, new TypeReference<>() {
         });
 
         assertEquals(user2.getEmail(), actual.getEmail());
@@ -168,6 +249,59 @@ public class UsersControllerTest extends IntegrationTest {
         assertEquals(1, actual.getRoles().size());
         assertEquals(ProjectRole.CONSUMER.name(), actual.getRoles().get(0).getRole());
     }
+
+    /**
+     * PUT /v1/projects/{projectId}/users/{userId}
+     */
+    @Test
+    public void shouldNotUpdateUserToProject() throws Exception {
+        ProjectDto projectDto = super.createProject("New Project 1", "token1", null, null, null, 0);
+
+        String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + projectDto.getId() + CurationConstants.API_USERS;
+        ProjectUserDto projectUserDto = new ProjectUserDto(UserDtoAssembler.assemble(user2), Arrays.asList(new String[]{ProjectRole.CONTRIBUTOR.name()}));
+        mockMvc.perform(post(endpoint)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(projectUserDto))
+                .header(IDPConstants.JWT_TOKEN, "token2"))
+                .andExpect(status().isNotFound());
+    }
+
+    /**
+     * PUT /v1/projects/{projectId}/users/{userId}
+     */
+    @Test
+    public void shouldNotUpdateUserToProjectAsContributor() throws Exception {
+        ProjectDto projectDto = super.createProject("New Project 1", "token1", null, null, null, 0);
+
+        String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + projectDto.getId() + CurationConstants.API_USERS;
+        ProjectUserDto projectUserDto = new ProjectUserDto(UserDtoAssembler.assemble(user2), Arrays.asList(new String[]{ProjectRole.CONTRIBUTOR.name()}));
+        userService.addUserToProject(super.user2, projectDto.getId(), Arrays.asList(new ProjectRole[]{ProjectRole.CONTRIBUTOR}));
+
+        mockMvc.perform(post(endpoint)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(projectUserDto))
+                .header(IDPConstants.JWT_TOKEN, "token2"))
+                .andExpect(status().isNotFound());
+    }
+
+    /**
+     * PUT /v1/projects/{projectId}/users/{userId}
+     */
+    @Test
+    public void shouldNotUpdateUserToProjectAsConsumer() throws Exception {
+        ProjectDto projectDto = super.createProject("New Project 1", "token1", null, null, null, 0);
+
+        String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + projectDto.getId() + CurationConstants.API_USERS;
+        ProjectUserDto projectUserDto = new ProjectUserDto(UserDtoAssembler.assemble(user2), Arrays.asList(new String[]{ProjectRole.CONTRIBUTOR.name()}));
+        userService.addUserToProject(super.user2, projectDto.getId(), Arrays.asList(new ProjectRole[]{ProjectRole.CONSUMER}));
+
+        mockMvc.perform(post(endpoint)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(projectUserDto))
+                .header(IDPConstants.JWT_TOKEN, "token2"))
+                .andExpect(status().isNotFound());
+    }
+
 
     /**
      * DELETE /v1/projects/{projectId}/users/{userId}
@@ -187,7 +321,7 @@ public class UsersControllerTest extends IntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        UserDto actual = mapper.readValue(response, new TypeReference<UserDto>() {
+        UserDto actual = mapper.readValue(response, new TypeReference<>() {
         });
 
         assertEquals(user2.getEmail(), actual.getEmail());
@@ -216,9 +350,59 @@ public class UsersControllerTest extends IntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        List<UserDto> actualList = mapper.readValue(response, new TypeReference<List<UserDto>>() {
+        List<UserDto> actualList = mapper.readValue(response, new TypeReference<>() {
         });
 
         assertEquals(1, actualList.size());
+    }
+
+    /**
+     * DELETE /v1/projects/{projectId}/users/{userId}
+     */
+    @Test
+    public void shouldNotDeleteUserRolesInProject() throws Exception {
+        ProjectDto projectDto = super.createProject("New Project 1", "token1", null, null, null, 0);
+
+        String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + projectDto.getId() + CurationConstants.API_USERS;
+        ProjectUserDto projectUserDto = new ProjectUserDto(UserDtoAssembler.assemble(user2), Arrays.asList(new String[]{ProjectRole.CONTRIBUTOR.name()}));
+        mockMvc.perform(post(endpoint)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(projectUserDto))
+                .header(IDPConstants.JWT_TOKEN, "token2"))
+                .andExpect(status().isNotFound());
+    }
+
+    /**
+     * DELETE /v1/projects/{projectId}/users/{userId}
+     */
+    @Test
+    public void shouldNotDeleteUserRolesInProjectAsContributor() throws Exception {
+        ProjectDto projectDto = super.createProject("New Project 1", "token1", null, null, null, 0);
+
+        String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + projectDto.getId() + CurationConstants.API_USERS;
+        ProjectUserDto projectUserDto = new ProjectUserDto(UserDtoAssembler.assemble(user2), Arrays.asList(new String[]{ProjectRole.CONTRIBUTOR.name()}));
+        userService.addUserToProject(super.user2, projectDto.getId(), Arrays.asList(new ProjectRole[]{ProjectRole.CONTRIBUTOR}));
+        mockMvc.perform(post(endpoint)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(projectUserDto))
+                .header(IDPConstants.JWT_TOKEN, "token2"))
+                .andExpect(status().isNotFound());
+    }
+
+    /**
+     * DELETE /v1/projects/{projectId}/users/{userId}
+     */
+    @Test
+    public void shouldNotDeleteUserRolesInProjectAsConsumer() throws Exception {
+        ProjectDto projectDto = super.createProject("New Project 1", "token1", null, null, null, 0);
+
+        String endpoint = GeneralCommon.API_V1 + CurationConstants.API_PROJECTS + "/" + projectDto.getId() + CurationConstants.API_USERS;
+        ProjectUserDto projectUserDto = new ProjectUserDto(UserDtoAssembler.assemble(user2), Arrays.asList(new String[]{ProjectRole.CONTRIBUTOR.name()}));
+        userService.addUserToProject(super.user2, projectDto.getId(), Arrays.asList(new ProjectRole[]{ProjectRole.CONSUMER}));
+        mockMvc.perform(post(endpoint)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(projectUserDto))
+                .header(IDPConstants.JWT_TOKEN, "token2"))
+                .andExpect(status().isNotFound());
     }
 }
