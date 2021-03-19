@@ -1,12 +1,14 @@
 import React, { Fragment, useState } from 'react';
-import { BrowserRouter, Route, RouteComponentProps, withRouter } from "react-router-dom";
+import { BrowserRouter, Route, RouteComponentProps, Switch, withRouter } from "react-router-dom";
 import logo from './logo.svg';
 import './App.css';
 import { createStyles, Theme, WithStyles, withStyles } from '@material-ui/core';
 
 import Home from './pages/Home'
 import Login from './pages/Login'
+import ProjectPage from './pages/projects/ProjectPage'
 import { AuthProvider } from './auth-context';
+import EntityPage from './pages/entities/EntityPage';
 
 let styles = (theme:Theme) => createStyles({
     main: {
@@ -28,8 +30,17 @@ function App(props:AppProps) {
       <Fragment>
           <BrowserRouter>
               <main className={classes.main}>
-                  <Route path={`${process.env.PUBLIC_URL}/`} exact component={Home} />
-                  <Route path={`${process.env.PUBLIC_URL}/login`} component={Login}></Route>
+                <Switch>
+                    <Route exact path={`${process.env.PUBLIC_URL}/`} component={Home} />
+
+                    <Route exact path={`${process.env.PUBLIC_URL}/login`} component={Login}></Route>
+
+                    <Route exact path={`${process.env.PUBLIC_URL}/projects/:id`}
+                        component={(props:any) => <ProjectPage id={props.match.params.id}/>}></Route>
+
+                    <Route exact path={`${process.env.PUBLIC_URL}/projects/:projectId/entities/:entityId`}
+                        component={(props:any) => <EntityPage projectId={props.match.params.projectId} entityId={props.match.params.entityId} />}></Route>
+                </Switch>
               </main>
           </BrowserRouter>
       </Fragment>

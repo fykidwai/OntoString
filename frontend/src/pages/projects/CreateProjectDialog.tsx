@@ -1,5 +1,5 @@
 
-import { Button, CircularProgress, createStyles, darken, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, lighten, makeStyles, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Theme, WithStyles, withStyles } from "@material-ui/core";
+import { Box, Button, CircularProgress, createStyles, darken, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, lighten, makeStyles, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Theme, WithStyles, withStyles } from "@material-ui/core";
 import React, { Fragment } from "react";
 import { useState, useEffect } from "react";
 import { getAuthHeaders, getToken, isLoggedIn } from "../../auth";
@@ -45,7 +45,9 @@ class CreateProjectDialog extends React.Component<Props, State> {
                     <DialogContentText>
                         Please enter a name and description for the project.
                     </DialogContentText>
-                    <ProjectForm project={project} onUpdateProject={this.onUpdateProject} />
+                    <Box m={2}>
+                        <ProjectForm project={project} onUpdateProject={this.onUpdateProject} />
+                    </Box>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={this.onClose} color="secondary" variant="outlined">
@@ -73,6 +75,7 @@ class CreateProjectDialog extends React.Component<Props, State> {
 
     onCreate = () => {
         this.props.onCreate(this.state.project)
+        this.setState(prevState => ({ ...prevState, open: false }))
     }
 }
 

@@ -1,5 +1,6 @@
 
 
+import { Breadcrumbs, Link } from '@material-ui/core'
 import React from 'react'
 import { Redirect } from 'react-router-dom'
 import { getToken, isLoggedIn } from '../auth'
@@ -15,7 +16,13 @@ export default function Home(props:Props) {
     }
 
     return <div>
-        <div>Logged in as {getToken().authEmail} with token {getToken().auth}</div>
+        {/* <div>Logged in as {getToken().authEmail} with token {getToken().auth}</div> */}
+            <Breadcrumbs>
+                <Link color="inherit" href="/">
+                    Projects
+                </Link>
+            </Breadcrumbs>
+        <h2>Projects</h2>
         <ProjectList />
     </div>
 }

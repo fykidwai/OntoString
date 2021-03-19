@@ -6,11 +6,18 @@ import Mapping from "./Mapping";
 export default interface Entity {
     id: string
     name: string
-    mappingStatus: string
+    mappingStatus: EntityStatus
     source: Source
     upstreamId: string
     upstreamField: string
     mappingSuggestions:MappingSuggestion[]
-    mappings:Mapping[]
+    mapping:Mapping
     created:Provenance
+}
+
+export enum EntityStatus {
+    UNMAPPED = 'UNMAPPED',
+    SUGGESTIONS_PROVIDED = 'SUGGESTIONS_PROVIDED',
+    AUTO_MAPPED = 'AUTO_MAPPED',
+    MANUALLY_MAPPED = 'MANUALLY_MAPPED'
 }

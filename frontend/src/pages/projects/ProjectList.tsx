@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import { getAuthHeaders, getToken, isLoggedIn } from "../../auth";
 import Project from "../../dto/Project";
 import CreateProjectDialog from "./CreateProjectDialog";
+import { Link, Redirect } from 'react-router-dom'
+import formatDate from "../../formatDate";
 
 const styles = (theme:Theme) => createStyles({
     tableRow: {
@@ -22,6 +24,7 @@ interface Props extends WithStyles<typeof styles> {
 
 interface State {
     projects:Project[]|null
+    goToProject:Project|null
 }
 
 class ProjectList extends React.Component<Props, State> {
@@ -31,7 +34,8 @@ class ProjectList extends React.Component<Props, State> {
         super(props)
 
         this.state = {
-            projects: null
+            projects: null,
+            goToProject: null
         }
 
 
@@ -43,11 +47,15 @@ class ProjectList extends React.Component<Props, State> {
 
     render() {
 
-        let { projects } = this.state
+        let { projects, goToProject } = this.state
         let { classes } = this.props
 
         if(projects === null) {
             return <CircularProgress />
+        }
+
+        if(goToProject !== null) {
+            return <Redirect to={`/projects/${goToProject.id}`} />
         }
 
         return <TableContainer component={Paper}>
@@ -62,7 +70,7 @@ class ProjectList extends React.Component<Props, State> {
           </TableHead>
           <TableBody>
             {projects.map((project:Project) => (
-              <TableRow className={classes.tableRow} key={project.name}>
+              <TableRow onClick={() => this.onClickProject(project)} className={classes.tableRow} key={project.name}>
                 <TableCell component="th" scope="row">
                     {project.name}
                 </TableCell>
@@ -73,7 +81,7 @@ class ProjectList extends React.Component<Props, State> {
                     {project.created!.user.name}
                 </TableCell>
                 <TableCell align="left">
-                    {project.created!.timestamp}
+                    {formatDate(project.created!.timestamp)}
                 </TableCell>
               </TableRow>
             ))}
@@ -89,6 +97,8 @@ class ProjectList extends React.Component<Props, State> {
 
     async fetchProjects() {
 
+        await this.setState(prevState => ({ ...prevState, projects: null }))
+
         let res = await fetch(process.env.REACT_APP_APIURL + '/v1/projects', {
             headers: { ...getAuthHeaders() }
         })
@@ -98,15 +108,19 @@ class ProjectList extends React.Component<Props, State> {
         this.setState(prevState => ({ ...prevState, projects }))
     }
 
+    onClickProject = async (project:Project) => {
+        this.setState(prevState => ({ ...prevState, goToProject: project }))
+    }
+
     onCreateProject = async (project:Project) => {
 
         let res = await fetch(process.env.REACT_APP_APIURL + '/v1/projects', {
             method: 'POST',
-            headers: { ...getAuthHeaders() },
+            headers: { ...getAuthHeaders(), 'content-type': 'application/json' },
             body: JSON.stringify(project)
         })
 
-        if(res.status === 200) {
+        if(res.status === 201) {
             this.fetchProjects()
         } else {
             console.log('Error creating projects: ' + res.statusText)

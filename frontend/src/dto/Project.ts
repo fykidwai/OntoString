@@ -16,6 +16,7 @@ user - always containing name and email
 import Provenance from "./Provenance";
 
 export default interface Project {
+    id?:string
     name:string
     description:string
     datasources:{

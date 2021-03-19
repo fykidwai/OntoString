@@ -1,5 +1,5 @@
 
-import { Button, CircularProgress, createStyles, darken, FormGroup, lighten, makeStyles, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Theme, WithStyles, withStyles } from "@material-ui/core";
+import { Button, CircularProgress, createStyles, darken, FormGroup, Grid, lighten, makeStyles, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Theme, WithStyles, withStyles } from "@material-ui/core";
 import React, { ChangeEvent } from "react";
 import { useState, useEffect } from "react";
 import { getAuthHeaders, getToken, isLoggedIn } from "../../auth";
@@ -26,8 +26,14 @@ class ProjectForm extends React.Component<Props, State> {
 
         return <form noValidate autoComplete='off'>
             <FormGroup>
-                <TextField label="Name" fullWidth onChange={this.onChangeName} />
-                <TextField label="Description" fullWidth onChange={this.onChangeDescription} />
+                <Grid container direction="column">
+                    <Grid item>
+                        <TextField label="Name" fullWidth onChange={this.onChangeName} />
+                    </Grid>
+                    <Grid item>
+                        <TextField label="Description" fullWidth onChange={this.onChangeDescription} />
+                    </Grid>
+                </Grid>
             </FormGroup>
         </form>
     }
