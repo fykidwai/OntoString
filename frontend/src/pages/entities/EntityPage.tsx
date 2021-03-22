@@ -4,13 +4,16 @@ import React from "react";
 import { Redirect } from "react-router-dom";
 import { post, get, put } from "../../api";
 import { getAuthHeaders, isLoggedIn } from "../../auth";
+import AuditTrail from "../../components/AuditTrail";
 import EntityStatusBox from "../../components/EntityStatusBox";
 import MappingStatusBox from "../../components/MappingStatusBox";
 import Entity from "../../dto/Entity";
 import Mapping, { CreateMapping } from "../../dto/Mapping";
 import MappingSuggestion from "../../dto/MappingSuggestion";
+import OntologyTerm from "../../dto/OntologyTerm";
 import Project from "../../dto/Project";
 import MappingSuggestionList from "./MappingSuggestionList";
+import MappingTermList from "./MappingTermList";
 
 interface Props {
     projectId:string
@@ -63,8 +66,12 @@ export default class EntityPage extends React.Component<Props, State> {
                 <Typography color="textPrimary">{entity.name}</Typography>
             </Breadcrumbs>
             <h1>{entity.name} <EntityStatusBox status={entity.mappingStatus} /></h1>
+            {/* <h2>Mappings</h2>
+            <MappingTermList project={project} entity={entity} onRemoveMappingTerm={this.onRemoveMappingTerm} /> */}
             <h2>Suggested Mappings</h2>
             <MappingSuggestionList project={project} entity={entity} onClickSuggestion={this.onClickSuggestion} />
+            <h2>History</h2>
+            <AuditTrail trail={entity.auditTrail} />
         </div>
     }
 
@@ -129,13 +136,16 @@ export default class EntityPage extends React.Component<Props, State> {
 
         let { projectId, entityId } = this.props
 
-        await post(`/v1/projects/${projectId}/entities/${entityId}/mapping`, mapping)
+        await post(`/v1/projects/${projectId}/mappings`, mapping)
     }
 
     private async updateMapping(mapping:Mapping) {
 
         let { projectId, entityId } = this.props
 
-        await put(`/v1/projects/${projectId}/entities/${entityId}/mapping`, [mapping])
+        await put(`/v1/projects/${projectId}/mappings/${mapping.id}`, mapping)
+    }
+
+    onRemoveMappingTerm = (term:OntologyTerm) => {
     }
 }

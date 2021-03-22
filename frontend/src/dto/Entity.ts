@@ -2,6 +2,7 @@ import MappingSuggestion from "./MappingSuggestion";
 import Provenance from "./Provenance";
 import Source from "./Source";
 import Mapping from "./Mapping";
+import AuditEntry from "./AuditEntry";
 
 export default interface Entity {
     id: string
@@ -13,6 +14,7 @@ export default interface Entity {
     mappingSuggestions:MappingSuggestion[]
     mapping:Mapping
     created:Provenance
+    auditTrail:AuditEntry[]
 }
 
 export enum EntityStatus {
