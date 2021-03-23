@@ -6,16 +6,17 @@ import OntologyTerm from './OntologyTerm'
 
 export interface CreateMapping {
     entityId:string
-    ontologyTerms: {
-        curie:string
-        iri:string
-        label:string
-        status:string
-    }[]
+    // ontologyTerms: {
+    //     curie:string
+    //     iri:string
+    //     label:string
+    //     status:string
+    // }[]
+    ontologyTerms:OntologyTerm[]
 }
 
 export default interface Mapping {
-    id:string
+    id?:string
     entityId:string
     ontologyTerms: OntologyTerm[]
     reviewed:boolean

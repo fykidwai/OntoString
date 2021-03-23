@@ -10,6 +10,7 @@ let actionToText = new Map<string,string>();
 actionToText.set('ADDED_MAPPING', 'added a mapping')
 actionToText.set('ADDED_SUGGESTION', 'added a suggestion')
 actionToText.set('REMOVED_SUGGESTION', 'removed a suggestion')
+actionToText.set('UPDATED_MAPPING', 'updated the mapping')
 
 export default function AuditTrail(props:{trail:AuditEntry[]}) {
 

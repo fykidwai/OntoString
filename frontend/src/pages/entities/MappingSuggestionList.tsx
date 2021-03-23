@@ -1,6 +1,7 @@
 
 import { Checkbox, createStyles, lighten, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Theme, WithStyles, withStyles } from "@material-ui/core"
 import React from "react"
+import LoadingOverlay from "../../components/LoadingOverlay"
 import TermStatusBox from "../../components/TermStatusBox"
 import Entity from "../../dto/Entity"
 import Mapping, { CreateMapping } from "../../dto/Mapping"
@@ -21,6 +22,7 @@ const styles = (theme:Theme) => createStyles({
 interface Props extends WithStyles<typeof styles> {
     project:Project
     entity:Entity
+    saving:boolean
 
     onClickSuggestion:(suggestion:MappingSuggestion)=>void
 }
@@ -39,9 +41,10 @@ class MappingSuggestionList extends React.Component<Props, State> {
 
     render() {
 
-        let { classes, project, entity } = this.props
+        let { classes, project, entity, saving } = this.props
 
-        return <TableContainer component={Paper}>
+        return <LoadingOverlay active={saving}>
+         <TableContainer component={Paper}>
         <Table aria-label="simple table">
           <TableHead>
             <TableRow>
@@ -90,6 +93,7 @@ class MappingSuggestionList extends React.Component<Props, State> {
           </TableBody>
         </Table>
       </TableContainer>
+                    </LoadingOverlay>
 
     }
 
