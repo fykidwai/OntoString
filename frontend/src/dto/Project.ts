@@ -13,21 +13,10 @@ timestamp - always using the format: YYYY-MM-DDThh:mm:ss.ms+TZ
 user - always containing name and email
 */
 
-import Provenance from "./Provenance";
+import Context from "./Context";
 
-export default interface Project {
-    id?:string
-    name:string
-    description:string
-    datasources:{
-        field:string
-        mappingList:string[]
-    }[]
-    ontologies:{
-        field:string
-        mappingList:string[]
-    }[]
-    preferredMappingOntologies:string[]
-    created?: Provenance
+export default interface Project extends Context {
+    numberOfReviewsRequired:number
+    contexts:Context[]
 }
 

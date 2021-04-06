@@ -3,86 +3,75 @@ import { Box, Button, CircularProgress, createStyles, darken, Dialog, DialogActi
 import React, { Fragment } from "react";
 import { useState, useEffect } from "react";
 import { getAuthHeaders, getToken, isLoggedIn } from "../../auth";
-import Project from "../../dto/Project";
-import ProjectForm from "./ProjectForm";
-import ProjectList from "./ProjectList";
+import Context from "../../dto/Context";
+import ContextForm from "./ContextForm";
 
 interface Props {
-    onCreate:(project:Project)=>void
+    onCreate:(context:Context)=>void
+    onClose:()=>void
 }
 
 interface State {
-    open:boolean
-    project:Project
+    context:Context
 }
 
-class CreateProjectDialog extends React.Component<Props, State> {
+class CreateContextDialog extends React.Component<Props, State> {
 
     constructor(props:Props) {
 
         super(props)
 
         this.state = {
-            open: false,
-            project: emptyProject()
+            context: emptyContext()
         }
 
     }
 
     render() {
 
-        let { open, project } = this.state
+        let { context } = this.state
 
-        console.dir(project)
+        console.dir(context)
 
-        return <div>
-            <Button variant="outlined" color="primary" onClick={this.onOpen}>
-                + Create Project
-            </Button>
-            <Dialog open={open} onClose={this.onClose}>
-                <DialogTitle>Create Project</DialogTitle>
+        return <Dialog open={true} onClose={this.onClose}>
+                <DialogTitle>Create Context</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Please enter a name and description for the project.
+                        Please enter a name and description for the context.
                     </DialogContentText>
                     <Box m={2}>
-                        <ProjectForm project={project} onUpdateProject={this.onUpdateProject} />
+                        <ContextForm context={context} onUpdateContext={this.onUpdateContext} />
                     </Box>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={this.onClose} color="secondary" variant="outlined">
                         Cancel
                     </Button>
-                    <Button onClick={this.onCreate} color="primary" variant="outlined" disabled={!project.name || !project.description}>
+                    <Button onClick={this.onCreate} color="primary" variant="outlined" disabled={!context.name || !context.description}>
                         Create
                     </Button>
                 </DialogActions>
             </Dialog>
-        </div>
-    }
-
-    onOpen = () => {
-        this.setState(prevState => ({ ...prevState, open: true, project: emptyProject() }))
     }
 
     onClose = () => {
-        this.setState(prevState => ({ ...prevState, open: false }))
+        this.props.onClose()
     }
 
-    onUpdateProject = (project:Project) => {
-        this.setState(prevState => ({ ...prevState, project }))
+    onUpdateContext = (context:Context) => {
+        this.setState(prevState => ({ ...prevState, context }))
     }
 
     onCreate = () => {
-        this.props.onCreate(this.state.project)
+        this.props.onCreate(this.state.context)
         this.setState(prevState => ({ ...prevState, open: false }))
     }
 }
 
-export default CreateProjectDialog
+export default CreateContextDialog
 
 
-function emptyProject() {
+function emptyContext() {
     return {
         name: '',
         description: '',

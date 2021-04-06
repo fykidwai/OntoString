@@ -24,6 +24,7 @@ const styles = (theme:Theme) => createStyles({
 
 interface Props extends WithStyles<typeof styles> {
     projectId:string
+    contextId:string
 }
 
 interface State {
@@ -146,7 +147,7 @@ class EntityList extends React.Component<Props, State> {
 
     async fetchEntities() {
 
-        let { projectId } = this.props
+        let { projectId, contextId } = this.props
 
         let { page, size, sortColumn, sortDirection, filter } = this.state
 
@@ -154,6 +155,7 @@ class EntityList extends React.Component<Props, State> {
 
         let res = await fetch(`${process.env.REACT_APP_APIURL}/v1/projects/${projectId}/entities?${
             new URLSearchParams({
+                context: contextId,
                 page: page.toString(),
                 size: size.toString(),
                 ...(sortColumn ? { sort: sortColumn + ',' + sortDirection } : {}),
