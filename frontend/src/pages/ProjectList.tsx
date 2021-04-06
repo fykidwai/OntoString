@@ -25,6 +25,7 @@ export default class ProjectList extends React.Component<Props, State> {
     }
 
     render() {
+        return <div/>
     }
 
     async fetchProjects() {
