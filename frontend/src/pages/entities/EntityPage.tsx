@@ -15,6 +15,7 @@ import OntologyTerm from "../../dto/OntologyTerm";
 import Project from "../../dto/Project";
 import MappingSuggestionList from "./MappingSuggestionList";
 import MappingTermList from "./MappingTermList";
+import { Link as RouterLink } from 'react-router-dom'
 
 interface Props {
     projectId:string
@@ -57,13 +58,13 @@ export default class EntityPage extends React.Component<Props, State> {
 
         return <div>
             <Breadcrumbs>
-                <Link color="inherit" href="/">
+                <Link color="inherit" component={RouterLink} to="/">
                     Projects
                 </Link>
-                <Link color="inherit" href={`/projects/${project.id!}`}>
+                <Link color="inherit" component={RouterLink} to={`/projects/${project.id!}`}>
                     {project.name}
                 </Link>
-                <Link color="inherit" href={`/projects/${project.id!}`}>
+                <Link color="inherit" component={RouterLink} to={`/projects/${project.id!}`}>
                     Entities
                 </Link>
                 <Typography color="textPrimary">{entity.name}</Typography>

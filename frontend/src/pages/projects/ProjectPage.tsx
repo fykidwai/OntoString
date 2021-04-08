@@ -9,6 +9,7 @@ import Context from "../../dto/Context";
 import Project from "../../dto/Project";
 import EntityList from "../entities/EntityList";
 import CreateContextDialog from "./CreateContextDialog";
+import { Link as RouterLink } from 'react-router-dom'
 
 interface Props {
     id:string
@@ -51,7 +52,7 @@ export default class ProjectPage extends React.Component<Props, State> {
         return <div>
             { showCreateContextDialog && <CreateContextDialog onCreate={this.createContext} onClose={this.closeCreateContext} /> }
             <Breadcrumbs>
-                <Link color="inherit" href="/">
+                <Link color="inherit" component={RouterLink} to="/">
                     Projects
                 </Link>
                 <Typography color="textPrimary">{project.name}</Typography>
