@@ -31,14 +31,14 @@ function App(props:AppProps) {
           <BrowserRouter basename={process.env.PUBLIC_URL}>
               <main className={classes.main}>
                 <Switch>
-                    <Route exact path={`${process.env.PUBLIC_URL}/`} component={Home} />
+                    <Route exact path={`/`} component={Home} />
 
-                    <Route exact path={`${process.env.PUBLIC_URL}/login`} component={Login}></Route>
+                    <Route exact path={`/login`} component={Login}></Route>
 
-                    <Route exact path={`${process.env.PUBLIC_URL}/projects/:id`}
+                    <Route exact path={`/projects/:id`}
                         component={(props:any) => <ProjectPage id={props.match.params.id}/>}></Route>
 
-                    <Route exact path={`${process.env.PUBLIC_URL}/projects/:projectId/entities/:entityId`}
+                    <Route exact path={`/projects/:projectId/entities/:entityId`}
                         component={(props:any) => <EntityPage projectId={props.match.params.projectId} entityId={props.match.params.entityId} />}></Route>
                 </Switch>
               </main>
