@@ -28,7 +28,7 @@ function App(props:AppProps) {
 
   return (
       <Fragment>
-          <BrowserRouter>
+          <BrowserRouter basename={process.env.PUBLIC_URL}>
               <main className={classes.main}>
                 <Switch>
                     <Route exact path={`${process.env.PUBLIC_URL}/`} component={Home} />

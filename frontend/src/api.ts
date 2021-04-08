@@ -4,7 +4,7 @@ import { getAuthHeaders, isLoggedIn } from "./auth"
 export async function request(path:string, init?:RequestInit|undefined):Promise<any> {
 
     if(!isLoggedIn()) {
-        window.location.href = '/login'
+        window.location.href = process.env.PUBLIC_URL + '/login'
         return
     }
 
