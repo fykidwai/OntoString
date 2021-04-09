@@ -3,7 +3,6 @@ services:
   - docker:dind
 
 stages:
-  - build-frontend
   - build-artefact
   - build-container
   - deploy-sandbox
@@ -16,7 +15,7 @@ variables:
 
 build-front:
   image: node:10.15.3
-  stage: build-frontend
+  stage: build-artefact
   script:
     - npm -v
     - node -v
@@ -38,7 +37,7 @@ build-war:
     - cd ../..
     - mvn clean install -B -Dspring.profiles.active=test
   dependencies:
-    - build-frontend
+    - build-front
   artifacts:
     paths:
       - target/*.war
