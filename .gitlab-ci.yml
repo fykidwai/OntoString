@@ -32,15 +32,8 @@ build-war:
   image: maven:3-jdk-12
   stage: build-artefact
   script:
-    - ls -lah
-    - cd frontend
-    - ls -lah
-    - cd src/main
-    - ls -lah
-    - mkdir webapps
-    - ls -lah
-    - mv frontend/build/* webapps/
-    - cd ../..
+    - mkdir src/main/webapps
+    - mv frontend/build/* src/main/webapps/
     - mvn clean install -B -Dspring.profiles.active=test
   dependencies:
     - build-front
