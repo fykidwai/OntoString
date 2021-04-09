@@ -3,6 +3,7 @@ services:
   - docker:dind
 
 stages:
+  - build-frontend
   - build-artefact
   - build-container
   - deploy-sandbox
@@ -15,7 +16,7 @@ variables:
 
 build-front:
   image: node:10.15.3
-  stage: build-artefact
+  stage: build-frontend
   script:
     - npm -v
     - node -v
