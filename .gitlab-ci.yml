@@ -32,9 +32,9 @@ build-war:
   image: maven:3-jdk-12
   stage: build-artefact
   script:
-    - mkdir src/main/webapps
-    - mv frontend/build/* src/main/webapps/
-    - ls -lah src/main/webapps
+    - mkdir src/main/webapp
+    - mv frontend/build/* src/main/webapp/
+    - ls -lah src/main/webapp
     - mvn clean package spring-boot:repackage -DskipTests=true
   dependencies:
     - build-front
