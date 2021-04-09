@@ -34,7 +34,8 @@ build-war:
   script:
     - mkdir src/main/webapps
     - mv frontend/build/* src/main/webapps/
-    - mvn clean install -B -Dspring.profiles.active=test
+    - ls -lah src/main/webapps
+    - mvn clean package spring-boot:repackage -DskipTests=true
   dependencies:
     - build-front
   artifacts:
